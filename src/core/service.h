@@ -97,6 +97,7 @@ struct ServiceFDStore {
         Service *service;
 
         int fd;
+        char *name;
         sd_event_source *event_source;
 
         LIST_FIELDS(ServiceFDStore, fd_store);

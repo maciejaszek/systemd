@@ -208,7 +208,9 @@ struct ExecContext {
 
 struct ExecParameters {
         char **argv;
-        int *fds; unsigned n_fds;
+        int *fds;
+        char **fds_names;
+        unsigned n_fds;
         char **environment;
         bool apply_permissions;
         bool apply_chroot;
