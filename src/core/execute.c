@@ -1184,7 +1184,6 @@ static void do_idle_pipe_dance(int idle_pipe[4]) {
 }
 
 static int build_listen_names(char **fds_names, char **env) {
-        size_t size;
         char *l = NULL, *names = NULL;
 
         assert(fds_names);
@@ -1194,14 +1193,11 @@ static int build_listen_names(char **fds_names, char **env) {
         if (!l)
                 return -ENOMEM;
 
-        size = strlen("LISTEN_NAMES=") + strlen(l) + 1;
-        names = new(char, size);
+        names  = strjoin("LISTEN_NAMES=", l, NULL);
         if (!names) {
                 free(l);
                 return -ENOMEM;
         }
-
-        sprintf(names, "%s%s", "LISTEN_NAMES=", l);
 
         *env = names;
         free(l);
@@ -1946,9 +1942,9 @@ int exec_spawn(Unit *unit,
         } else {
                 socket_fd = -1;
                 fds = params->fds;
+                n_fds = params->n_fds;
+                fds_names = params->fds_names;
         }
-        fds_names = params->fds_names;
-        n_fds = params->n_fds;
 
         r = exec_context_load_environment(unit, context, &files_env);
         if (r < 0)
@@ -1995,7 +1991,6 @@ int exec_spawn(Unit *unit,
                                          NULL);
                 }
 
-                strv_free(fds_names);
                 _exit(exit_status);
         }
 

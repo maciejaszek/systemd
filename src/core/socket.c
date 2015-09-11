@@ -92,8 +92,6 @@ static void socket_init(Unit *u) {
         s->exec_context.std_error = u->manager->default_std_error;
 
         s->control_command_id = _SOCKET_EXEC_COMMAND_INVALID;
-
-        s->name = NULL;
 }
 
 static void socket_unwatch_control_pid(Socket *s) {
@@ -146,8 +144,7 @@ static void socket_done(Unit *u) {
 
         strv_free(s->symlinks);
 
-        free(s->name);
-        s->name = NULL;
+        s->name = mfree(s->name);
         free(s->user);
         free(s->group);
 
@@ -608,7 +605,7 @@ static void socket_dump(Unit *u, FILE *f, const char *prefix) {
         if (!isempty(s->name))
                 fprintf(f,
                         "%sFileDescriptorName: %s\n",
-                        prefix, strna(s->name));
+                        prefix, s->name);
 
         if (!isempty(s->user) || !isempty(s->group))
                 fprintf(f,

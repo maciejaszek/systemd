@@ -71,7 +71,7 @@
 
     <para>If the <parameter>unset_environment</parameter> parameter is
     non-zero, <function>sd_listen_fds()</function> will unset the
-    <varname>$LISTEN_FDS</varname>i, <varname>$LISTEN_PID</varname>
+    <varname>$LISTEN_FDS</varname>, <varname>$LISTEN_PID</varname>
     and <varname>$LISTEN_NAMES</varname>environment variables before
     returning (regardless of whether the function call itself
     succeeded or not). Further calls to <function>sd_listen_fds()</function>
@@ -111,7 +111,7 @@
 
     <para>If passed file descriptors were labeled, then their names are
     passed in <varname>$LISTEN_NAMES</varname> environment variable.
-    Colon is used to separate labels.</para>
+    Colons are used to separate labels.</para>
   </refsect1>
 
   <refsect1>
