@@ -982,8 +982,8 @@ static int service_collect_fds(Service *s, int **fds, char ***fds_names, unsigne
 
         SET_FOREACH(u, UNIT(s)->dependencies[UNIT_TRIGGERED_BY], i) {
                 _cleanup_free_ int *cfds = NULL;
-                _cleanup_strv_free_ char **cfds_names = NULL;
-                unsigned cn_fds;
+                _cleanup_free_ char *cfds_name = NULL;
+                unsigned cn_fds, j;
                 Socket *sock;
 
                 if (u->type != UNIT_SOCKET)
@@ -991,7 +991,7 @@ static int service_collect_fds(Service *s, int **fds, char ***fds_names, unsigne
 
                 sock = SOCKET(u);
 
-                r = socket_collect_fds(sock, &cfds, &cfds_names, &cn_fds);
+                r = socket_collect_fds(sock, &cfds, &cfds_name, &cn_fds);
                 if (r < 0)
                         return r;
 
@@ -1001,8 +1001,11 @@ static int service_collect_fds(Service *s, int **fds, char ***fds_names, unsigne
                 if (!rfds) {
                         rfds = cfds;
                         cfds = NULL;
-                        rfds_names = cfds_names;
-                        cfds_names = NULL;
+                        for (j = 0; j < cn_fds; ++j) {
+                                r = strv_extend(&rfds_names, cfds_name);
+                                if (r < 0)
+                                        return r;
+                        }
                         rn_fds = cn_fds;
                 } else {
                         int *tfds;
@@ -1014,9 +1017,11 @@ static int service_collect_fds(Service *s, int **fds, char ***fds_names, unsigne
                         memcpy(tfds + rn_fds, cfds, cn_fds * sizeof(*tfds));
                         rfds = tfds;
 
-                        r = strv_extend_strv(&rfds_names, cfds_names);
-                        if (r < 0)
-                                return r;
+                        for (j = 0; j < cn_fds; ++j) {
+                                r = strv_extend(&rfds_names, cfds_name);
+                                if (r < 0)
+                                        return r;
+                        }
                         rn_fds += cn_fds;
 
                 }
@@ -1038,7 +1043,6 @@ static int service_collect_fds(Service *s, int **fds, char ***fds_names, unsigne
                                 return r;
                         ++rn_fds;
                 }
-                rfds_names[rn_fds] = NULL;
         }
 
         *fds = rfds;
@@ -2224,15 +2228,11 @@ static int service_deserialize_item(Unit *u, const char *key, const char *value,
                 r = 0;
                 if (strchr(value, ':')) {
                         _cleanup_free_ char *tmp = NULL;
-                        if (sscanf(value, "%i:%ms", &fd, &tmp) != 2) {
+                        if (sscanf(value, "%i:%ms", &fd, &tmp) != 2)
                                 log_unit_debug(u, "Failed to parse fd-store-fd value: %s", value);
-                                r = -1;
-                        } else {
-                                if (cunescape(tmp, UNESCAPE_RELAX, &name) < 0) {
+                        else
+                                if (cunescape(tmp, UNESCAPE_RELAX, &name) < 0)
                                         log_unit_debug(u, "Failed to parse fd-store-fd value: %s", value);
-                                        r = -1;
-                                }
-                        }
                 } else if (safe_atoi(value, &fd) < 0 || fd < 0 || !fdset_contains(fds, fd)) {
                         log_unit_debug(u, "Failed to parse fd-store-fd value: %s", value);
                         r = -1;
